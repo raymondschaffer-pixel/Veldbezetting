@@ -51,7 +51,7 @@
     height: auto;
   }
 
-  /* Hotspots over de 4 velden op IMG_1802.jpg */
+  /* Hotspots over de 4 velden op IMG_1802.jpg (Veld 2 gecorrigeerd naar rechts) */
   .hotspot {
     position: absolute;
     border: 2px dashed rgba(59, 130, 246, 0.7);
@@ -66,9 +66,8 @@
     border-color: #3b82f6;
   }
 
-  /* Coördinaten voor de 4 velden op de overzichtsfoto */
   #spot-stadion { top: 60%; left: 5%; width: 40%; height: 35%; }
-  #spot-veld2   { top: 32%; left: 42%; width: 25%; height: 25%; }
+  #spot-veld2   { top: 32%; left: 51%; width: 33%; height: 26%; } /* Aangepast: meer naar rechts */
   #spot-veld4   { top: 5%; left: 35%; width: 30%; height: 20%; }
   #spot-veld3   { top: 7%; left: 7%; width: 30%; height: 25%; }
 
@@ -223,10 +222,8 @@
 
   <!-- STAP 1: Overzichtskaart met Hotspots -->
   <div class="map-wrapper" id="overviewMap">
-    <!-- Hoofdfoto -->
     <img src="IMG_1802.jpg" alt="Sportpark Overzicht">
     
-    <!-- Klikbare Hotspots -->
     <div class="hotspot" id="spot-stadion" onclick="openField('stadion')">
       <div class="hotspot-label">Stadionveld</div>
     </div>
@@ -280,22 +277,18 @@
     <!-- Grafische Tijdlijn / Blokkenschema voor Vandaag -->
     <div class="timeline-container">
       <div class="timeline-title">Bezettingsoverzicht Vandaag (08:00 - 23:00)</div>
-      <div class="timeline-grid" id="timelineGrid">
-        <!-- Wordt dynamisch gevuld via script -->
-      </div>
+      <div class="timeline-grid" id="timelineGrid"></div>
     </div>
   </div>
 
 </div>
 
 <script>
-  // Gegevens van de velden gekoppeld aan de detailfoto's en agendanamen
   const fieldData = {
     stadion: {
       name: 'Stadionveld (Hoofdveld)',
       img: 'IMG_1803.jpg',
       agenda: 'AGOVV - Stadionveld',
-      // Voorbeeld bezette blokken (uren)
       busySlots: ['10:30', '11:30', '14:00', '15:00', '19:00', '20:30']
     },
     veld2: {
@@ -306,7 +299,7 @@
     },
     veld3: {
       name: 'Veld 3 (Kunstgras/Oefen)',
-      img: 'IMG_1806.jpg', // Of gerelateerde detailfoto
+      img: 'IMG_1806.jpg',
       agenda: 'AGOVV - Veld 3',
       busySlots: ['12:00', '15:00', '16:30']
     },
@@ -320,7 +313,6 @@
 
   let activeFieldKey = null;
 
-  // Functie om in te zoomen op een veld
   function openField(key) {
     activeFieldKey = key;
     const data = fieldData[key];
@@ -331,25 +323,19 @@
     document.getElementById('fieldTitle').innerText = data.name;
     document.getElementById('fieldImg').src = data.img;
 
-    // Zet standaard datum op vandaag
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('checkDate').value = today;
 
-    // Genereer het tijdlijn-overzicht voor de dag
     renderTimeline(data);
-    
-    // Reset resultaat blok
     document.getElementById('searchResult').style.display = 'none';
   }
 
-  // Terug naar de overzichtskaart
   function returnToOverview() {
     document.getElementById('detailView').style.display = 'none';
     document.getElementById('overviewMap').style.display = 'block';
     activeFieldKey = null;
   }
 
-  // Genereer de grafische tijdlijn balken
   function renderTimeline(data) {
     const grid = document.getElementById('timelineGrid');
     grid.innerHTML = '';
@@ -368,15 +354,12 @@
     });
   }
 
-  // Slimme beschikbaarheidscheck met suggesties voor vóór en na
   function checkAvailability() {
     const time = document.getElementById('checkTime').value;
     const data = fieldData[activeFieldKey];
     const resultBox = document.getElementById('searchResult');
     
     resultBox.style.display = 'block';
-
-    // Simuleer controle op basis van de agenda-bezetting
     const isBusy = data.busySlots.includes(time);
 
     if (!isBusy) {
@@ -384,7 +367,6 @@
       resultBox.innerHTML = `<strong>Beschikbaar!</strong> Dit veld is op de gekozen tijd (${time} uur) volledig vrij in de agenda (${data.agenda}).`;
     } else {
       resultBox.className = 'result-box result-busy';
-      // Bereken slimme suggesties (voorbeeld logica voor vóór/na)
       resultBox.innerHTML = `<strong>Helaas bezet!</strong> Dit tijdstip (${time} uur) is al ingepland.<br><em>Slimme suggestie:</em> Dit veld is wel vrij in de blokken direct <strong>ervoor</strong> of <strong>erna</strong> op deze dag.`;
     }
   }
