@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGOVV - Veldbezetting & Beschikbaarheid</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: 15px;
+    background: #0b192c;
+    color: #fff;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 5px;
+    color: #ffffff;
+  }
+
+  p.subtitle {
+    font-size: 0.8rem;
+    text-align: center;
+    color: #94a3b8;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  /* Hoofdfoto met hotspots */
+  .map-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    border: 1px solid #1e3a5f;
+    background: #112238;
+  }
+
+  .map-wrapper img {
+    width: 100%;
+    display: block;
+    height: auto;
+  }
+
+  /* Hotspots over de 4 velden op IMG_1802.jpg */
+  .hotspot {
+    position: absolute;
+    border: 2px dashed rgba(59, 130, 246, 0.7);
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .hotspot:hover {
+    background: rgba(59, 130, 246, 0.4);
+    border-color: #3b82f6;
+  }
+
+  /* Coördinaten voor de 4 velden op de overzichtsfoto */
+  #spot-stadion { top: 60%; left: 5%; width: 40%; height: 35%; }
+  #spot-veld2   { top: 32%; left: 42%; width: 25%; height: 25%; }
+  #spot-veld4   { top: 5%; left: 35%; width: 30%; height: 20%; }
+  #spot-veld3   { top: 7%; left: 7%; width: 30%; height: 25%; }
+
+  .hotspot-label {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    background: rgba(11, 25, 44, 0.85);
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  /* Veld Detail Scherm (Zoom View) */
+  .detail-view {
+    display: none;
+    background: #0f172a;
+    border: 1px solid #1e3a5f;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
+
+  .back-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .back-btn:hover {
+    background: #334155;
+    color: #fff;
+  }
+
+  .detail-img-container {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    border: 1px solid #334155;
+  }
+
+  .detail-img-container img {
+    width: 100%;
+    display: block;
+  }
+
+  /* Zoek & Controleer Formulier */
+  .search-box {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #334155;
+  }
+
+  .search-box label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .search-row input, .search-row select {
+    flex: 1;
+    padding: 8px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.8rem;
+  }
+
+  .check-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    color: white;
+    border: none;
+    padding: 9px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+
+  .check-btn:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+  }
+
+  /* Resultaten & Suggesties */
+  .result-box {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    display: none;
+  }
+  .result-free { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; }
+  .result-busy { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; }
+
+  /* Grafische Tijdlijn / Blokkenschema */
+  .timeline-container {
+    margin-top: 15px;
+  }
+
+  .timeline-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+  }
+
+  .timeline-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .time-slot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  .slot-free { background: rgba(16, 185, 129, 0.2); border-left: 3px solid #10b981; color: #a7f3d0; }
+  .slot-busy { background: rgba(239, 68, 68, 0.2); border-left: 3px solid #ef4444; color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>AGOVV Veldbezetting</h1>
+  <p class="subtitle">Klik op een veld op de plattegrond om de live bezetting en tijden te bekijken</p>
+
+  <!-- STAP 1: Overzichtskaart met Hotspots -->
+  <div class="map-wrapper" id="overviewMap">
+    <!-- Hoofdfoto -->
+    <img src="IMG_1802.jpg" alt="Sportpark Overzicht">
+    
+    <!-- Klikbare Hotspots -->
+    <div class="hotspot" id="spot-stadion" onclick="openField('stadion')">
+      <div class="hotspot-label">Stadionveld</div>
+    </div>
+    <div class="hotspot" id="spot-veld2" onclick="openField('veld2')">
+      <div class="hotspot-label">Veld 2</div>
+    </div>
+    <div class="hotspot" id="spot-veld3" onclick="openField('veld3')">
+      <div class="hotspot-label">Veld 3</div>
+    </div>
+    <div class="hotspot" id="spot-veld4" onclick="openField('veld4')">
+      <div class="hotspot-label">Veld 4</div>
+    </div>
+  </div>
+
+  <!-- STAP 2: Detail / Zoom Weergave per Veld -->
+  <div class="detail-view" id="detailView">
+    <button class="back-btn" onclick="returnToOverview()">← Terug naar alle velden</button>
+    <h2 id="fieldTitle" style="margin-top:0; font-size:1rem; color:#60a5fa;">Veldnaam</h2>
+    
+    <div class="detail-img-container">
+      <img id="fieldImg" src="" alt="Veld Detail">
+    </div>
+
+    <!-- Zoek & Beschikbaarheidstool -->
+    <div class="search-box">
+      <label>Controleer specifieke datum & tijdstip</label>
+      <div class="search-row">
+        <input type="date" id="checkDate">
+        <select id="checkTime">
+          <option value="09:00">09:00 uur</option>
+          <option value="10:30">10:30 uur</option>
+          <option value="12:00">12:00 uur</option>
+          <option value="13:30" selected>13:30 uur</option>
+          <option value="15:00">15:00 uur</option>
+          <option value="16:30">16:30 uur</option>
+          <option value="19:00">19:00 uur</option>
+          <option value="20:30">20:30 uur</option>
+        </select>
+        <select id="checkDuration">
+          <option value="1">1 uur</option>
+          <option value="1.5" selected>1.5 uur</option>
+          <option value="2">2 uur</option>
+          <option value="2.5">2.5 uur</option>
+        </select>
+      </div>
+      <button class="check-btn" onclick="checkAvailability()">Controleer beschikbaarheid</button>
+      
+      <div id="searchResult" class="result-box"></div>
+    </div>
+
+    <!-- Grafische Tijdlijn / Blokkenschema voor Vandaag -->
+    <div class="timeline-container">
+      <div class="timeline-title">Bezettingsoverzicht Vandaag (08:00 - 23:00)</div>
+      <div class="timeline-grid" id="timelineGrid">
+        <!-- Wordt dynamisch gevuld via script -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Gegevens van de velden gekoppeld aan de detailfoto's en agendanamen
+  const fieldData = {
+    stadion: {
+      name: 'Stadionveld (Hoofdveld)',
+      img: 'IMG_1803.jpg',
+      agenda: 'AGOVV - Stadionveld',
+      // Voorbeeld bezette blokken (uren)
+      busySlots: ['10:30', '11:30', '14:00', '15:00', '19:00', '20:30']
+    },
+    veld2: {
+      name: 'Veld 2',
+      img: 'IMG_1804.jpg',
+      agenda: 'AGOVV - Veld 2',
+      busySlots: ['09:00', '13:30', '18:00']
+    },
+    veld3: {
+      name: 'Veld 3 (Kunstgras/Oefen)',
+      img: 'IMG_1806.jpg', // Of gerelateerde detailfoto
+      agenda: 'AGOVV - Veld 3',
+      busySlots: ['12:00', '15:00', '16:30']
+    },
+    veld4: {
+      name: 'Veld 4',
+      img: 'IMG_1806.jpg',
+      agenda: 'AGOVV - Agenda - Agenda veld 4',
+      busySlots: ['10:00', '14:00', '15:30']
+    }
+  };
+
+  let activeFieldKey = null;
+
+  // Functie om in te zoomen op een veld
+  function openField(key) {
+    activeFieldKey = key;
+    const data = fieldData[key];
+
+    document.getElementById('overviewMap').style.display = 'none';
+    document.getElementById('detailView').style.display = 'block';
+    
+    document.getElementById('fieldTitle').innerText = data.name;
+    document.getElementById('fieldImg').src = data.img;
+
+    // Zet standaard datum op vandaag
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('checkDate').value = today;
+
+    // Genereer het tijdlijn-overzicht voor de dag
+    renderTimeline(data);
+    
+    // Reset resultaat blok
+    document.getElementById('searchResult').style.display = 'none';
+  }
+
+  // Terug naar de overzichtskaart
+  function returnToOverview() {
+    document.getElementById('detailView').style.display = 'none';
+    document.getElementById('overviewMap').style.display = 'block';
+    activeFieldKey = null;
+  }
+
+  // Genereer de grafische tijdlijn balken
+  function renderTimeline(data) {
+    const grid = document.getElementById('timelineGrid');
+    grid.innerHTML = '';
+
+    const hours = ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30', '18:00', '19:30', '21:00'];
+    
+    hours.forEach(time => {
+      const isBusy = data.busySlots.includes(time);
+      const slot = document.createElement('div');
+      slot.className = `time-slot ${isBusy ? 'slot-busy' : 'slot-free'}`;
+      slot.innerHTML = `
+        <span><strong>${time} uur</strong> (${data.agenda})</span>
+        <span>${isBusy ? '🔴 Bezet' : '🟢 Vrij'}</span>
+      `;
+      grid.appendChild(slot);
+    });
+  }
+
+  // Slimme beschikbaarheidscheck met suggesties voor vóór en na
+  function checkAvailability() {
+    const time = document.getElementById('checkTime').value;
+    const data = fieldData[activeFieldKey];
+    const resultBox = document.getElementById('searchResult');
+    
+    resultBox.style.display = 'block';
+
+    // Simuleer controle op basis van de agenda-bezetting
+    const isBusy = data.busySlots.includes(time);
+
+    if (!isBusy) {
+      resultBox.className = 'result-box result-free';
+      resultBox.innerHTML = `<strong>Beschikbaar!</strong> Dit veld is op de gekozen tijd (${time} uur) volledig vrij in de agenda (${data.agenda}).`;
+    } else {
+      resultBox.className = 'result-box result-busy';
+      // Bereken slimme suggesties (voorbeeld logica voor vóór/na)
+      resultBox.innerHTML = `<strong>Helaas bezet!</strong> Dit tijdstip (${time} uur) is al ingepland.<br><em>Slimme suggestie:</em> Dit veld is wel vrij in de blokken direct <strong>ervoor</strong> of <strong>erna</strong> op deze dag.`;
+    }
+  }
+</script>
+
+</body>
+</html>
